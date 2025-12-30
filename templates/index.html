@@ -1,0 +1,111 @@
+{% extends "layout.html" %}
+{% set title = "Tasks" %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">Your Tasks</h5>
+          <form method="post" action="{{ url_for('undo_last') }}">
+            <button class="btn btn-sm btn-warning" {% if not last_event %}disabled{% endif %}>
+              Undo
+            </button>
+          </form>
+        </div>
+
+        <form class="mt-3 row g-2" method="post" action="{{ url_for('add_task') }}">
+          <div class="col-12 col-md-7">
+            <input class="form-control" name="title" placeholder="Add a task…" autocomplete="off" />
+          </div>
+          <div class="col-7 col-md-3">
+            <input class="form-control" type="date" name="due_date" />
+          </div>
+          <div class="col-5 col-md-2 d-grid">
+            <button class="btn btn-primary">Add</button>
+          </div>
+        </form>
+
+        <div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
+          <div class="btn-group" role="group" aria-label="Filter">
+            <a class="btn btn-sm {% if show=='active' %}btn-dark{% else %}btn-outline-dark{% endif %}" href="{{ url_for('index', show='active', sort=sort) }}">Active</a>
+            <a class="btn btn-sm {% if show=='completed' %}btn-dark{% else %}btn-outline-dark{% endif %}" href="{{ url_for('index', show='completed', sort=sort) }}">Completed</a>
+            <a class="btn btn-sm {% if show=='all' %}btn-dark{% else %}btn-outline-dark{% endif %}" href="{{ url_for('index', show='all', sort=sort) }}">All</a>
+            <a class="btn btn-sm {% if show=='deleted' %}btn-dark{% else %}btn-outline-dark{% endif %}" href="{{ url_for('index', show='deleted', sort=sort) }}">Deleted</a>
+          </div>
+
+          <div class="ms-auto btn-group" role="group" aria-label="Sort">
+            <a class="btn btn-sm {% if sort=='recent' %}btn-outline-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('index', show=show, sort='recent') }}">Sort: Recent</a>
+            <a class="btn btn-sm {% if sort=='due' %}btn-outline-primary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('index', show=show, sort='due') }}">Sort: Due</a>
+          </div>
+        </div>
+
+        <ul class="list-group list-group-flush mt-3">
+          {% if tasks|length == 0 %}
+            <li class="list-group-item text-muted">Nothing here yet.</li>
+          {% endif %}
+
+          {% for t in tasks %}
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+              <div class="me-3">
+                <div class="fw-semibold {% if t.done %}text-decoration-line-through text-muted{% endif %}">
+                  {{ t.title }}
+                </div>
+
+                <div class="small text-muted">
+                  {% if t.due_date %}
+                    Due: {{ t.due_date }}
+                    {% if t.badge %}
+                      <span class="badge bg-{{ t.badge[1] }} ms-2">{{ t.badge[0] }}</span>
+                    {% endif %}
+                  {% else %}
+                    No due date
+                  {% endif %}
+                  • Updated: {{ t.updated_at }}
+                </div>
+              </div>
+
+              <div class="d-flex gap-2">
+                {% if t.deleted == 0 %}
+                  <form method="post" action="{{ url_for('toggle_task', task_id=t.id) }}">
+                    <button class="btn btn-sm btn-outline-success">
+                      {% if t.done %}Uncomplete{% else %}Complete{% endif %}
+                    </button>
+                  </form>
+
+                  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('edit_page', task_id=t.id) }}">Edit</a>
+
+                  <form method="post" action="{{ url_for('delete_task', task_id=t.id) }}">
+                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{{ url_for('restore_task', task_id=t.id) }}">
+                    <button class="btn btn-sm btn-outline-primary">Restore</button>
+                  </form>
+                {% endif %}
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">What makes this not “just a to-do app”</h5>
+        <ul class="mb-3">
+          <li><b>Activity Feed</b> logs every change</li>
+          <li><b>Undo</b> reverses the last action</li>
+          <li><b>Due dates</b> with overdue + due-today badges</li>
+          <li><b>Login</b> keeps it private</li>
+        </ul>
+        <a class="btn btn-outline-dark w-100" href="{{ url_for('activity') }}">View Activity Feed</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
